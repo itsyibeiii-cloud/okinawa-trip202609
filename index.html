@@ -135,6 +135,139 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
+
+<style id="mobile-super-friendly">
+/* ===== Mobile Super Friendly ===== */
+html { scroll-behavior: smooth; }
+body { -webkit-text-size-adjust: 100%; overflow-x: hidden; }
+
+@media (max-width: 767px) {
+  body { padding-bottom: 78px !important; }
+
+  /* Prevent accidental horizontal overflow */
+  * { max-width: 100%; }
+  img, video, iframe { max-width: 100%; height: auto; }
+
+  /* Comfortable page gutters */
+  .container, main, header > div {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Make cards breathe on a phone */
+  section.day-group {
+    border-radius: 18px !important;
+    padding: 14px !important;
+  }
+
+  /* Day heading: stack accommodation/details instead of squeezing */
+  .day-group > div:first-child {
+    gap: 10px !important;
+    align-items: flex-start !important;
+  }
+  .day-group > div:first-child > div:last-child {
+    text-align: left !important;
+    width: 100% !important;
+  }
+
+  /* Timeline cards: larger tap targets */
+  .day-group .cursor-pointer {
+    -webkit-tap-highlight-color: transparent;
+  }
+  .day-group .cursor-pointer > div:last-child {
+    padding: 13px !important;
+    border-radius: 16px !important;
+  }
+
+  /* Make tiny itinerary text easier to read */
+  .day-group p,
+  .day-group .text-xs {
+    line-height: 1.55 !important;
+  }
+
+  /* Route/map area */
+  #itinerary-map {
+    min-height: 52vh !important;
+    height: 52vh !important;
+    border-radius: 18px !important;
+  }
+
+  /* Route step cards */
+  .route-step-item {
+    min-height: 58px;
+    padding: 11px !important;
+  }
+
+  /* Buttons are easier to tap */
+  button, a {
+    touch-action: manipulation;
+  }
+  button {
+    min-height: 42px;
+  }
+
+  /* Prevent long labels from forcing horizontal scroll */
+  h1, h2, h3, p, span, a, button {
+    overflow-wrap: anywhere;
+  }
+
+  /* Popup content on Leaflet */
+  .leaflet-popup-content {
+    margin: 10px 12px !important;
+    max-width: 250px !important;
+  }
+
+  /* Mobile sticky day navigation */
+  #mobile-day-nav {
+    display: flex;
+  }
+}
+
+@media (min-width: 768px) {
+  #mobile-day-nav { display: none; }
+}
+
+/* Bottom safe-area support for iPhone */
+#mobile-day-nav {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+  gap: 6px;
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(244,63,94,.18);
+  box-shadow: 0 -4px 18px rgba(15,23,42,.10);
+}
+
+#mobile-day-nav button {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #fecdd3;
+  background: white;
+  color: #475569;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.1;
+  padding: 9px 3px;
+}
+
+#mobile-day-nav button.active {
+  background: #f43f5e;
+  color: white;
+  border-color: #e11d48;
+}
+
+@media (max-width: 380px) {
+  #mobile-day-nav button { font-size: 11px; padding-left: 1px; padding-right: 1px; }
+}
+</style>
+
 </head>
 <body class="min-h-screen flex flex-col font-sans antialiased selection:bg-rose-200">
 
@@ -1318,5 +1451,44 @@
       initMap();
     };
   </script>
+
+<!-- Mobile quick day navigation -->
+<nav id="mobile-day-nav" aria-label="手機快速切換天數">
+  <button type="button" data-day="all" class="active">總覽</button>
+  <button type="button" data-day="1">DAY 1</button>
+  <button type="button" data-day="2">DAY 2</button>
+  <button type="button" data-day="3">DAY 3</button>
+  <button type="button" data-day="4">DAY 4</button>
+  <button type="button" data-day="5">DAY 5</button>
+</nav>
+<script id="mobile-super-friendly-js">
+(function () {
+  function syncMobileNav(day) {
+    document.querySelectorAll('#mobile-day-nav button').forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.day === String(day));
+    });
+  }
+
+  document.querySelectorAll('#mobile-day-nav button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (typeof window.switchDay === 'function') {
+        window.switchDay(btn.dataset.day);
+        syncMobileNav(btn.dataset.day);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Keep the bottom nav in sync if the existing page switches days.
+  var originalSwitchDay = window.switchDay;
+  if (typeof originalSwitchDay === 'function') {
+    window.switchDay = function (day) {
+      originalSwitchDay(day);
+      syncMobileNav(day);
+    };
+  }
+})();
+</script>
+
 </body>
 </html>
